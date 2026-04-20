@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão Off-limits | RH</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#1a1a1a;background:#f0f0f0;min-height:100vh}
+
+/* ── CONFIG SHAREPOINT BANNER ── */
+.sp-config-banner{background:#fff3cd;border-bottom:2px solid #ffc107;padding:10px 20px;font-size:13px;color:#856404;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sp-config-banner b{color:#533f03}
+.sp-config-banner a{color:#533f03;font-weight:600;cursor:pointer;text-decoration:underline}
+.sp-status{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px}
+.sp-status.connected{background:#dcfce7;color:#166534}
+.sp-status.disconnected{background:#fee2e2;color:#991b1b}
+.sp-status.loading{background:#dbeafe;color:#1e40af}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(255,255,255,.15)}70%{box-shadow:0 0 0 8px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+.login-box{background:rgba(255,255,255,.97);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;animation:fadeUp .5s ease both;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.login-logo{font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.login-logo-icon{width:36px;height:36px;background:#1a1a2e;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.login-sub{font-size:13px;color:#888;margin-bottom:28px}
+.login-avatar{width:64px;height:64px;background:#f0f0ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:26px;border:2px solid #e0e0f0;transition:all .3s}
+.login-avatar.has-user{background:#1a1a2e;border-color:#1a1a2e;animation:pulse-ring 1.5s ease-out}
+.login-avatar span{font-size:18px;font-weight:700;color:#fff;display:none}
+.login-avatar.has-user span{display:block}
+.login-avatar svg{display:block}
+.login-avatar.has-user svg{display:none}
+.login-input-wrap{position:relative;margin-bottom:12px}
+.login-input-wrap input{width:100%;padding:11px 14px 11px 42px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;color:#1a1a1a;background:#fff;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.login-input-wrap input:focus{outline:none;border-color:#1a1a2e;box-shadow:0 0 0 3px rgba(26,26,46,.08)}
+.login-input-wrap .iico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#aaa;pointer-events:none}
+.login-btn{width:100%;padding:13px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.02em}
+.login-btn:hover{background:#2d2d4e;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,26,46,.25)}
+.login-footer{text-align:center;font-size:12px;color:#bbb;margin-top:16px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ── APP ── */
+.app{display:none}
+.topbar{background:#1a1a2e;color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.topbar h1{font-size:15px;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.user-info{font-size:12px;opacity:.7}
+.rpt{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+.rpt-admin{background:#fee2e2;color:#991b1b}
+.rpt-editor{background:#dbeafe;color:#1e40af}
+.rpt-viewer{background:#dcfce7;color:#166534}
+.rpt-md{background:#ede9fe;color:#5b21b6}
+.logout-btn{font-size:12px;color:rgba(255,255,255,.55);cursor:pointer;background:none;border:none;padding:4px 8px}
+.logout-btn:hover{color:#fff}
+.nav{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 20px;display:flex;flex-wrap:wrap}
+.nav button{padding:12px 14px;border:none;background:transparent;color:#666;cursor:pointer;font-size:13px;border-bottom:2px solid transparent}
+.nav button.active{color:#1a1a2e;border-bottom-color:#1a1a2e;font-weight:500}
+.nav button:hover:not(.active):not(:disabled){color:#1a1a2e}
+.nav button:disabled{opacity:.3;cursor:not-allowed}
+.main{padding:20px;max-width:1100px;margin:0 auto}
+.screen{display:none}.screen.active{display:block}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.metric{background:#fff;border-radius:10px;padding:14px 16px;border:1px solid #e5e5e5}
+.metric .lbl{font-size:11px;color:#888;margin-bottom:5px}
+.metric .val{font-size:24px;font-weight:700}
+.val.ok{color:#16a34a}.val.warn{color:#d97706}.val.bad{color:#dc2626}.val.inf{color:#1a1a2e}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px;margin-bottom:10px}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.cname{font-size:15px;font-weight:600;color:#1a1a2e}
+.badges{display:flex;gap:5px;flex-wrap:wrap}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
+.b-ativo{background:#dcfce7;color:#166534}
+.b-vencendo{background:#fef3c7;color:#92400e}
+.b-expirado{background:#f3f4f6;color:#6b7280}
+.b-revisao{background:#fee2e2;color:#991b1b}
+.b-geral{background:#dbeafe;color:#1e40af}
+.b-lista{background:#ede9fe;color:#5b21b6}
+.b-area{background:#f3f4f6;color:#374151}
+.b-aguardando{background:#fef3c7;color:#92400e}
+.b-respondido{background:#dcfce7;color:#166534}
+.meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:#666;margin-bottom:6px}
+.prog{height:4px;background:#f3f4f6;border-radius:2px;margin-top:10px}
+.progbar{height:4px;border-radius:2px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.chip{font-size:11px;padding:2px 9px;border-radius:99px;background:#f3f4f6;color:#374151;border:1px solid #e5e5e5}
+.chip.saiu{background:#fee2e2;color:#991b1b;border-color:#fecaca;text-decoration:line-through}
+.chip.novo{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.obs-text{font-size:12px;color:#888;margin-top:6px}
+.card-actions{display:flex;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid #f3f4f6;flex-wrap:wrap}
+.alink{font-size:12px;color:#1a1a2e;cursor:pointer;text-decoration:underline}
+.alink.red{color:#dc2626}
+
+/* ── RESPOSTAS PENDENTES ── */
+.resp-pendente-card{background:#fff;border:2px solid #fde68a;border-radius:10px;padding:16px;margin-bottom:10px;position:relative}
+.resp-pendente-card::before{content:'Nova resposta do Forms';position:absolute;top:-10px;left:14px;background:#f59e0b;color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
+.resp-diff{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.resp-diff .saiu-chip{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;font-size:12px;padding:3px 10px;border-radius:99px}
+.resp-diff .novo-chip{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;font-size:12px;padding:3px 10px;border-radius:99px}
+
+/* ── FORMS ── */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.filters input,.filters select{padding:8px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fff;flex:1;min-width:120px}
+.ttl{font-size:17px;font-weight:600;margin-bottom:14px;color:#1a1a2e}
+.sub{font-size:13px;color:#666;margin-bottom:14px;line-height:1.6}
+.sect{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:18px;margin-bottom:14px}
+.sect-ttl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fg.one{grid-template-columns:1fr}.fg.three{grid-template-columns:1fr 1fr 1fr}
+.field label{display:block;font-size:12px;color:#555;margin-bottom:4px;font-weight:500}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#1a1a1a;background:#fff;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#1a1a2e}
+.field textarea{height:80px;resize:vertical}
+.btnrow{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.pbtn{background:#1a1a2e;color:#fff;border:none;padding:9px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500}
+.pbtn:hover{background:#2d2d4e}
+.pbtn:disabled{opacity:.5;cursor:not-allowed}
+.sbtn{padding:9px 16px;border-radius:8px;border:1px solid #e0e0e0;background:#fff;color:#1a1a1a;cursor:pointer;font-size:13px}
+.sbtn:hover{background:#f5f5f5}
+.dbtn{padding:7px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff;color:#dc2626;cursor:pointer;font-size:12px}
+.dbtn:hover{background:#fee2e2}
+.alert{border-radius:8px;padding:11px 14px;font-size:13px;margin-bottom:10px}
+.alert.warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.alert.danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.alert.success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.alert.info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+.alert a{color:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+.empty{padding:20px 0;color:#888;font-size:13px}
+.dias-ok{color:#16a34a;font-weight:600}
+.dias-warn{color:#d97706;font-weight:600}
+.dias-bad{color:#dc2626;font-weight:600}
+.utbl{width:100%;border-collapse:collapse;font-size:13px}
+.utbl th{text-align:left;padding:10px 12px;border-bottom:2px solid #e5e5e5;color:#666;font-weight:500;font-size:12px}
+.utbl td{padding:10px 12px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.utbl tr:last-child td{border-bottom:none}
+.utbl tr.inactive td{opacity:.4}
+.rp{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500;display:inline-block}
+.rp-admin{background:#fee2e2;color:#991b1b}
+.rp-editor{background:#dbeafe;color:#1e40af}
+.rp-viewer{background:#dcfce7;color:#166534}
+.rp-md{background:#ede9fe;color:#5b21b6}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+.dot-on{background:#16a34a}.dot-off{background:#d1d5db}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;border:1px solid #e5e5e5;border-radius:99px;padding:4px 12px;font-size:12px}
+.tag button{background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px;line-height:1;padding:0}
+.add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.add-row input{flex:1;min-width:120px;padding:8px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px}
+.pq-item{background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;padding:12px;margin-bottom:8px}
+.pq-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pq-row input[type=text]{flex:1;min-width:160px;padding:8px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px}
+.pq-row select{padding:8px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fff}
+.hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:12px}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:#1a1a2e;margin-top:3px;flex-shrink:0}
+.hist-data{color:#888;min-width:90px}
+.lider-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap}
+.lider-row:last-child{border-bottom:none}
+.lider-principal{font-size:11px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:99px;font-weight:500}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:520px;border:1px solid #e0e0e0;margin:auto}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal .msub{font-size:13px;color:#666;margin-bottom:18px;line-height:1.5}
+.email-preview{background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;padding:14px;font-size:13px;line-height:1.7;margin:12px 0;white-space:pre-wrap;color:#1a1a1a;max-height:300px;overflow-y:auto}
+.envio-card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px;margin-bottom:10px}
+.envio-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+
+/* ── SPINNER ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #e0e0e0;border-top-color:#1a1a2e;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+
+/* ── SP CONFIG MODAL ── */
+.sp-field{margin-bottom:14px}
+.sp-field label{display:block;font-size:12px;color:#555;margin-bottom:4px;font-weight:600}
+.sp-field input{width:100%;padding:9px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:monospace}
+.sp-field input:focus{outline:none;border-color:#1a1a2e}
+.sp-field .hint{font-size:11px;color:#888;margin-top:3px}
+
+/* ── SYNC indicator ── */
+.sync-bar{background:#1a1a2e;color:rgba(255,255,255,.7);font-size:12px;padding:6px 20px;display:flex;align-items:center;gap:8px}
+.sync-bar.syncing{background:#0f3460}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+.sync-dot.syncing{background:#f59e0b;animation:pulse .8s infinite alternate}
+@keyframes pulse{from{opacity:.4}to{opacity:1}}
+
+@media(max-width:600px){.fg{grid-template-columns:1fr}.fg.three{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-avatar" id="login-avatar">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span id="login-initials"></span>
+    </div>
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      Off-limits RH
+    </div>
+    <div class="login-sub">Acesso restrito — equipe de RH</div>
+    <div class="login-input-wrap">
+      <svg class="iico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <input type="text" id="lu" placeholder="seu.usuario" autocomplete="username" oninput="updateAvatar(this.value)" onkeydown="if(event.key==='Enter')document.getElementById('lp').focus()">
+    </div>
+    <div class="login-input-wrap">
+      <svg class="iico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input type="password" id="lp" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="lerr" style="font-size:13px;color:#dc2626;text-align:center;min-height:20px;margin-bottom:8px"></div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-footer">Gestão de contratos off-limits · RH</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <!-- SharePoint status bar -->
+  <div class="sync-bar" id="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-msg">Aguardando configuração do SharePoint</span>
+    <span style="margin-left:auto;cursor:pointer;opacity:.7" onclick="abrirConfigSP()">⚙ Configurar SharePoint</span>
+  </div>
+
+  <div class="topbar">
+    <h1>Off-limits RH</h1>
+    <div class="topbar-right">
+      <span class="user-info" id="uinfo"></span>
+      <span class="rpt" id="rpill"></span>
+      <button class="logout-btn" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="active" onclick="nav('dash')" id="nb-dash">Dashboard</button>
+    <button onclick="nav('lista')" id="nb-lista">Off-limits</button>
+    <button onclick="nav('novo')" id="nb-novo">Novo contrato</button>
+    <button onclick="nav('revisao')" id="nb-revisao">Revisão</button>
+    <button onclick="nav('envios')" id="nb-envios">Envios MD</button>
+    <button onclick="nav('respostas')" id="nb-respostas">Respostas Forms <span id="resp-badge" style="display:none;background:#dc2626;color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px"></span></button>
+    <button onclick="nav('export')" id="nb-export">Exportar</button>
+    <button onclick="nav('config')" id="nb-config">Configurações</button>
+  </div>
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dash" class="screen active">
+      <div class="metrics" id="mets"></div>
+      <div id="dash-alerts"></div>
+      <div class="ttl">Contratos ativos recentes</div>
+      <div id="dash-cards"></div>
+    </div>
+
+    <!-- LISTA -->
+    <div id="lista" class="screen">
+      <div class="filters">
+        <input type="text" id="busca" placeholder="Buscar empresa, gestor ou colaborador..." oninput="renderLista()">
+        <select id="fst" onchange="renderLista()">
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativos</option>
+          <option value="vencendo">Vencendo</option>
+          <option value="expirado">Expirados</option>
+        </select>
+        <select id="farea" onchange="renderLista()"></select>
+        <select id="frel" onchange="renderLista()">
+          <option value="">Todos os tipos</option>
+          <option value="geral">Off-limit geral</option>
+          <option value="lista">Lista específica</option>
+        </select>
+      </div>
+      <div id="lista-cards"></div>
+    </div>
+
+    <!-- NOVO CONTRATO -->
+    <div id="novo" class="screen">
+      <div class="ttl" id="novo-ttl">Novo contrato off-limit</div>
+      <div class="sect">
+        <div class="sect-ttl">Empresa</div>
+        <div class="fg">
+          <div class="field"><label>Empresa *</label><input type="text" id="fe" placeholder="Nome da empresa"></div>
+          <div class="field"><label>Área *</label><select id="fa"></select></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-ttl">Líderes MD responsáveis</div>
+        <div class="sub" style="margin-bottom:10px">Adicione um ou mais líderes. O primeiro será o responsável principal.</div>
+        <div id="lideres-form"></div>
+        <button class="sbtn" style="font-size:12px;margin-top:8px" onclick="addLiderForm()">+ Adicionar líder</button>
+      </div>
+      <div class="sect">
+        <div class="sect-ttl">Vigência</div>
+        <div class="fg three">
+          <div class="field"><label>Início *</label><input type="date" id="fi"></div>
+          <div class="field"><label>Fim *</label><input type="date" id="ff"></div>
+          <div class="field"><label>Prazo off-limit após fim (meses)</label><input type="number" id="fp" value="6" min="1" max="60"></div>
+        </div>
+        <div class="fg">
+          <div class="field">
+            <label>Prazo de revisão da lista (dias)</label>
+            <input type="number" id="frev" placeholder="Ex: 45" min="1" max="365">
+            <span style="font-size:11px;color:#888;margin-top:3px;display:block">Deixe em branco para usar o padrão global</span>
+          </div>
+          <div class="field">
+            <label>Envio do formulário MD</label>
+            <select id="fenvio">
+              <option value="manual">Manual — eu envio quando quiser</option>
+              <option value="auto">Automático — lembrete no sistema</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="sect-ttl">Tipo de off-limit</div>
+        <div class="fg one">
+          <div class="field"><label>Relação *</label>
+            <select id="fr" onchange="toggleListaBlock()">
+              <option value="">Selecione</option>
+              <option value="geral">Off-limit geral (toda a empresa)</option>
+              <option value="lista">Lista específica de colaboradores</option>
+            </select>
+          </div>
+        </div>
+        <div id="lista-block" style="display:none">
+          <div class="field"><label>Colaboradores off-limit (um por linha)</label>
+            <textarea id="fl" placeholder="João Silva&#10;Maria Santos&#10;..."></textarea>
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <label>Observações internas (confidencial)</label>
+          <textarea id="fo" placeholder="Notas sobre o contrato..."></textarea>
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="sbtn" onclick="nav('lista')">Cancelar</button>
+        <button class="pbtn" id="btn-salvar" onclick="salvar()">Salvar contrato</button>
+      </div>
+      <div id="fmsg" style="margin-top:12px;font-size:13px"></div>
+    </div>
+
+    <!-- REVISAO -->
+    <div id="revisao" class="screen">
+      <div class="ttl">Revisão periódica</div>
+      <div class="sub">Contratos com lista específica que precisam de confirmação do líder MD.</div>
+      <div id="rev-cards"></div>
+    </div>
+
+    <!-- ENVIOS MD -->
+    <div id="envios" class="screen">
+      <div class="ttl">Envios para líderes MD</div>
+      <div class="sub">Gerencie e dispare os formulários de revisão. Acompanhe quem já respondeu e atualize as listas com base nas respostas.</div>
+      <div id="envios-content"></div>
+    </div>
+
+    <!-- ★ RESPOSTAS DO FORMS (NOVO) ★ -->
+    <div id="respostas" class="screen">
+      <div class="ttl">Respostas do Microsoft Forms</div>
+      <div class="sub">Respostas recebidas dos líderes MD via formulário. Revise e aplique as alterações na lista de colaboradores com um clique.</div>
+      <div id="respostas-content"></div>
+    </div>
+
+    <!-- EXPORTAR -->
+    <div id="export" class="screen">
+      <div class="ttl">Exportar dados</div>
+      <div class="sub">Exporte para Excel (.csv) ou backup completo.</div>
+      <div class="sect">
+        <div class="sect-ttl">Filtros</div>
+        <div class="fg">
+          <div class="field"><label>Status</label>
+            <select id="exst"><option value="">Todos</option><option value="ativo">Ativos</option><option value="vencendo">Vencendo</option><option value="expirado">Expirados</option></select>
+          </div>
+          <div class="field"><label>Área</label><select id="exar"><option value="">Todas</option></select></div>
+          <div class="field"><label>Tipo</label>
+            <select id="exrel"><option value="">Todos</option><option value="lista">Lista específica</option><option value="geral">Off-limit geral</option></select>
+          </div>
+          <div class="field"><label>Aguardando revisão</label>
+            <select id="exrev"><option value="">Todos</option><option value="sim">Só pendentes</option></select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="pbtn" onclick="exportCSV()">↓ Baixar Excel (.csv)</button>
+        <button class="sbtn" onclick="exportJSON()">↓ Backup completo (.json)</button>
+        <button class="sbtn" onclick="importarJSON()">↑ Restaurar backup (.json)</button>
+      </div>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="processarImport(event)">
+      <div id="exmsg" style="margin-top:12px;font-size:13px;color:#16a34a"></div>
+    </div>
+
+    <!-- CONFIGURACOES -->
+    <div id="config" class="screen">
+      <div class="ttl">Configurações</div>
+
+      <div class="sect" style="border:2px solid #1a1a2e">
+        <div class="sect-ttl" style="color:#1a1a2e">🔗 Integração SharePoint</div>
+        <div class="sub" style="margin-bottom:14px">Configure a conexão com o SharePoint para sincronizar contratos e receber respostas do Forms automaticamente.</div>
+        <div id="sp-status-config"></div>
+        <div class="btnrow" style="justify-content:flex-start">
+          <button class="pbtn" onclick="abrirConfigSP()">⚙ Configurar conexão SharePoint</button>
+          <button class="sbtn" onclick="testarConexaoSP()">🔌 Testar conexão</button>
+          <button class="sbtn" onclick="sincronizarSP()">↻ Sincronizar agora</button>
+        </div>
+        <div id="sp-test-msg" style="margin-top:10px;font-size:13px"></div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-ttl">Prazo padrão de revisão</div>
+        <div class="fg one">
+          <div class="field">
+            <label>Prazo padrão (em dias)</label>
+            <input type="number" id="prazo-global" min="1" max="365" placeholder="45">
+          </div>
+        </div>
+        <div class="btnrow"><button class="pbtn" onclick="salvarPrazoGlobal()">Salvar prazo</button></div>
+        <div id="pg-msg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-ttl">Usuários e acessos</div>
+        <div style="overflow-x:auto"><table class="utbl" id="users-table"></table></div>
+        <div style="margin-top:14px"><button class="pbtn" onclick="abrirModalUser(null)">+ Adicionar usuário</button></div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-ttl">Áreas</div>
+        <div class="tag-list" id="areas-list"></div>
+        <div class="add-row">
+          <input type="text" id="nova-area" placeholder="Nova área..." onkeydown="if(event.key==='Enter')addArea()">
+          <button class="pbtn" onclick="addArea()">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="sect">
+        <div class="sect-ttl">Minha senha</div>
+        <div class="fg one">
+          <div class="field"><label>Nova senha</label><input type="password" id="my-pw1" placeholder="Nova senha"></div>
+          <div class="field" style="margin-top:10px"><label>Confirmar</label><input type="password" id="my-pw2" placeholder="Repita"></div>
+        </div>
+        <div class="btnrow"><button class="pbtn" onclick="trocarSenha()">Salvar senha</button></div>
+        <div id="mypw-msg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL EDITAR CONTRATO -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <h2>Editar contrato</h2>
+    <div class="msub">Atualize os campos e salve.</div>
+    <div class="fg">
+      <div class="field"><label>Empresa</label><input type="text" id="me-empresa"></div>
+      <div class="field"><label>Área</label><select id="me-area"></select></div>
+      <div class="field"><label>Início</label><input type="date" id="me-inicio"></div>
+      <div class="field"><label>Fim</label><input type="date" id="me-fim"></div>
+      <div class="field"><label>Prazo off-limit (meses)</label><input type="number" id="me-prazo" min="1" max="60"></div>
+      <div class="field"><label>Prazo revisão (dias)</label><input type="number" id="me-rev" min="1" max="365" placeholder="Padrão global"></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Envio formulário MD</label>
+      <select id="me-envio"><option value="manual">Manual</option><option value="auto">Automático</option></select>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Tipo de off-limit</label>
+      <select id="me-relacao" onchange="toggleModalLista()">
+        <option value="geral">Off-limit geral</option>
+        <option value="lista">Lista específica</option>
+      </select>
+    </div>
+    <div id="me-lista-block" style="display:none;margin-bottom:12px">
+      <div class="field"><label>Colaboradores (um por linha)</label><textarea id="me-lista" style="height:90px"></textarea></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Observações internas</label><textarea id="me-obs" style="height:60px"></textarea></div>
+    <div class="sect" style="margin-bottom:12px">
+      <div class="sect-ttl">Líderes MD</div>
+      <div id="me-lideres"></div>
+      <button class="sbtn" style="font-size:12px;margin-top:8px" onclick="addMeLider()">+ Adicionar líder</button>
+    </div>
+    <div class="btnrow">
+      <button class="sbtn" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="pbtn" onclick="salvarEdicao()">Salvar</button>
+    </div>
+    <input type="hidden" id="me-id">
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <h2 id="mu-title">Novo usuário</h2>
+    <div class="msub" id="mu-sub">Preencha os dados do novo membro.</div>
+    <div class="fg one">
+      <div class="field"><label>Nome completo *</label><input type="text" id="mu-nome" placeholder="Ana Lima"></div>
+      <div class="field" style="margin-top:10px"><label>Login *</label><input type="text" id="mu-login" placeholder="ana.lima"></div>
+      <div class="field" style="margin-top:10px"><label>Perfil *</label>
+        <select id="mu-role">
+          <option value="admin">Admin — acesso total</option>
+          <option value="editor">Editor — cadastra e edita</option>
+          <option value="viewer">Visualizador — só consulta</option>
+          <option value="md">Líder MD — só revisão</option>
+        </select>
+      </div>
+      <div class="field" style="margin-top:10px"><label>Senha *</label><input type="password" id="mu-pw"></div>
+      <div class="field" style="margin-top:10px"><label>Confirmar senha *</label><input type="password" id="mu-pw2"></div>
+    </div>
+    <div class="btnrow" style="margin-top:16px">
+      <button class="sbtn" onclick="closeModal('modal-user')">Cancelar</button>
+      <button class="pbtn" onclick="salvarUser()">Salvar</button>
+    </div>
+    <div id="mu-msg" style="margin-top:8px;font-size:13px"></div>
+    <input type="hidden" id="mu-id">
+  </div>
+</div>
+
+<!-- MODAL PREVIA EMAIL -->
+<div class="modal-overlay" id="modal-previa">
+  <div class="modal" style="max-width:620px">
+    <h2>Prévia do e-mail</h2>
+    <div class="msub">Revise e edite o conteúdo antes de enviar.</div>
+    <div style="background:#f0f0ff;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:16px;border:1px solid #bfdbfe">
+      Este e-mail será aberto no Outlook com todos os campos já preenchidos. Você só precisa clicar em Enviar.
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Para (<span id="prev-nome" style="color:#1a1a2e;font-weight:600"></span>)</label>
+      <input type="email" id="prev-para" placeholder="email@empresa.com">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Assunto</label>
+      <input type="text" id="prev-assunto">
+    </div>
+    <div class="field" style="margin-bottom:4px">
+      <label>Corpo do e-mail</label>
+      <textarea id="prev-corpo" style="height:280px;font-family:inherit;font-size:13px;line-height:1.7"></textarea>
+    </div>
+    <div class="btnrow">
+      <button class="sbtn" onclick="closeModal('modal-previa')">Cancelar</button>
+      <button class="sbtn" onclick="copiarDoModal()">Copiar texto</button>
+      <button class="pbtn" onclick="enviarDoModal()">Abrir no Outlook</button>
+    </div>
+    <input type="hidden" id="prev-id">
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR RESPOSTA MANUAL -->
+<div class="modal-overlay" id="modal-resp">
+  <div class="modal">
+    <h2>Registrar resposta do líder</h2>
+    <div class="msub">Informe o que o líder respondeu. O sistema atualizará a lista automaticamente.</div>
+    <div id="resp-lista" style="margin-bottom:14px"></div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Novos colaboradores a adicionar (um por linha)</label>
+      <textarea id="resp-novos" style="height:70px" placeholder="Nome Sobrenome&#10;..."></textarea>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Observações da resposta</label>
+      <textarea id="resp-obs" style="height:50px" placeholder="..."></textarea>
+    </div>
+    <div class="btnrow">
+      <button class="sbtn" onclick="closeModal('modal-resp')">Cancelar</button>
+      <button class="pbtn" onclick="salvarResposta()">Atualizar lista</button>
+    </div>
+    <input type="hidden" id="resp-id">
+  </div>
+</div>
+
+<!-- ★ MODAL CONFIGURAÇÃO SHAREPOINT ★ -->
+<div class="modal-overlay" id="modal-sp-config">
+  <div class="modal" style="max-width:580px">
+    <h2>⚙ Configuração do SharePoint</h2>
+    <div class="msub">Conecte o sistema com a lista do SharePoint para sincronizar contratos e receber respostas automaticamente.</div>
+
+    <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;font-size:12px;color:#92400e;margin-bottom:18px">
+      <b>📋 Como encontrar essas informações:</b><br>
+      1. Abra seu SharePoint no navegador<br>
+      2. A URL será algo como: <code style="background:#fff;padding:1px 5px;border-radius:3px">https://suaempresa.sharepoint.com/sites/rh</code><br>
+      3. O nome do site é a parte depois de <b>/sites/</b> (ex: <b>rh</b>)<br>
+      4. O nome da lista você vê na página do SharePoint (ex: <b>Contratos - Off-limits</b>)
+    </div>
+
+    <div class="sp-field">
+      <label>URL do SharePoint (sem barra no final)</label>
+      <input type="text" id="sp-url" placeholder="https://suaempresa.sharepoint.com">
+      <div class="hint">Exemplo: https://contoso.sharepoint.com</div>
+    </div>
+    <div class="sp-field">
+      <label>Nome do site SharePoint</label>
+      <input type="text" id="sp-site" placeholder="rh">
+      <div class="hint">A parte depois de /sites/ na URL. Ex: se a URL é .../sites/rh, coloque: rh</div>
+    </div>
+    <div class="sp-field">
+      <label>Nome exato da lista de contratos</label>
+      <input type="text" id="sp-lista-contratos" placeholder="Contratos - Off-limits">
+      <div class="hint">O nome que aparece no SharePoint. Exatamente como está escrito.</div>
+    </div>
+    <div class="sp-field">
+      <label>Nome da lista de respostas do Forms (opcional)</label>
+      <input type="text" id="sp-lista-respostas" placeholder="Respostas - Off-limits">
+      <div class="hint">Se o Power Automate salva as respostas em uma lista separada. Deixe em branco se não tiver.</div>
+    </div>
+
+    <div style="background:#dbeafe;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:12px;color:#1e40af;margin-bottom:18px">
+      <b>🔐 Autenticação:</b> Este sistema usa o login da Microsoft que já está ativo no seu navegador (cookies da sessão do SharePoint). Não é necessário configurar chaves de API separadas — funciona enquanto você estiver logada na sua conta Microsoft.
+    </div>
+
+    <div class="btnrow">
+      <button class="sbtn" onclick="closeModal('modal-sp-config')">Cancelar</button>
+      <button class="sbtn" onclick="testarConexaoSP()">🔌 Testar conexão</button>
+      <button class="pbtn" onclick="salvarConfigSP()">Salvar e conectar</button>
+    </div>
+    <div id="sp-modal-msg" style="margin-top:10px;font-size:13px"></div>
+  </div>
+</div>
+
+<!-- ★ MODAL APLICAR RESPOSTA DO FORMS ★ -->
+<div class="modal-overlay" id="modal-aplicar-resp">
+  <div class="modal" style="max-width:580px">
+    <h2>Aplicar resposta do Forms</h2>
+    <div class="msub" id="mar-sub">Revise as mudanças antes de aplicar.</div>
+    <div id="mar-content"></div>
+    <div class="btnrow">
+      <button class="sbtn" onclick="closeModal('modal-aplicar-resp')">Cancelar</button>
+      <button class="pbtn" id="mar-btn-aplicar" onclick="confirmarAplicarResposta()">✓ Aplicar mudanças</button>
+    </div>
+    <input type="hidden" id="mar-resp-idx">
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STORAGE & CONFIG
+// ══════════════════════════════════════════════════
+const SK='offlimits_v5';
+const SK_SP='offlimits_sp_config';
+let DATA=[],CFG={},SESSION=null;
+let SP_CFG={url:'',site:'',listaContratos:'Contratos - Off-limits',listaRespostas:''};
+let SP_RESPOSTAS_PENDENTES=[];
+
+const DCFG={
+  prazoGlobal:45,
+  users:[
+    {id:1,nome:'Administrador',login:'admin',pw:'admin123',role:'admin',ativo:true},
+    {id:2,nome:'Caroline Rosa',login:'caroline.rosa',pw:'Carol123',role:'admin',ativo:true}
+  ],
+  areas:['D&I','Infra','Geral','Tech','Financeiro','Comercial','A&M Infra'],
+  perguntas:[
+    {texto:'Os colaboradores abaixo ainda estão ativos na empresa?',tipo:'check-lista',obrig:true},
+    {texto:'Algum colaborador saiu desde a última confirmação?',tipo:'sim-nao',obrig:true},
+    {texto:'Se sim, informe quem saiu:',tipo:'texto-longo',obrig:false},
+    {texto:'Há novos colaboradores a adicionar?',tipo:'sim-nao',obrig:true},
+    {texto:'Se sim, liste os novos nomes (um por linha):',tipo:'texto-longo',obrig:false},
+    {texto:'Observações adicionais:',tipo:'texto-longo',obrig:false},
+  ]
+};
+
+const SEED=[
+  {id:1,empresa:'Grupo Votorantim',lideres:[{nome:'Ana Lima',email:'ana@emp.com',principal:true}],area:'Geral',inicio:'2024-01-10',fim:'2025-01-09',prazo:6,prazoRev:null,envioTipo:'manual',relacao:'geral',lista:'',obs:'Executive search',revisao:null,historico:[]},
+  {id:2,empresa:'Itaú Unibanco',lideres:[{nome:'Carlos Mota',email:'carlos@emp.com',principal:true}],area:'Financeiro',inicio:'2024-03-01',fim:'2025-06-30',prazo:12,prazoRev:30,envioTipo:'auto',relacao:'lista',lista:'Ricardo Alves\nFernanda Costa\nMarcelo Roque',obs:'',revisao:'2024-12-01',historico:[{data:'2024-12-01',acao:'Revisão registrada',user:'admin'}]},
+];
+
+const RL={admin:'Admin',editor:'Editor',viewer:'Visualizador',md:'Líder MD'};
+const RC={admin:'rp-admin',editor:'rp-editor',viewer:'rp-viewer',md:'rp-md'};
+
+function load(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){const p=JSON.parse(r);DATA=p.data||SEED;CFG=p.cfg||JSON.parse(JSON.stringify(DCFG));}
+    else{DATA=SEED;CFG=JSON.parse(JSON.stringify(DCFG));}
+  }catch(e){DATA=SEED;CFG=JSON.parse(JSON.stringify(DCFG));}
+  if(!CFG.users||!CFG.users.length)CFG.users=DCFG.users;
+  if(!CFG.users.find(u=>u.login==='caroline.rosa')){
+    CFG.users.push({id:Date.now(),nome:'Caroline Rosa',login:'caroline.rosa',pw:'Carol123',role:'admin',ativo:true});save();
+  }
+  if(!CFG.areas)CFG.areas=[...DCFG.areas];
+  if(!CFG.perguntas)CFG.perguntas=[...DCFG.perguntas];
+  if(!CFG.prazoGlobal)CFG.prazoGlobal=45;
+  DATA.forEach(r=>{
+    if(!r.lideres)r.lideres=[{nome:r.gestor||'',email:r.email||'',principal:true}];
+    if(!r.historico)r.historico=[];
+    if(!r.prazoRev)r.prazoRev=null;
+    if(!r.envioTipo)r.envioTipo='manual';
+    if(!r.spId)r.spId=null;
+  });
+  // Carregar config SP
+  try{const sc=localStorage.getItem(SK_SP);if(sc)SP_CFG={...SP_CFG,...JSON.parse(sc)};}catch(e){}
+}
+function save(){localStorage.setItem(SK,JSON.stringify({data:DATA,cfg:CFG}));}
+function saveSPCfg(){localStorage.setItem(SK_SP,JSON.stringify(SP_CFG));}
+
+// ══════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════
+function updateAvatar(val){
+  const av=document.getElementById('login-avatar');
+  const sp=document.getElementById('login-initials');
+  if(val.trim()){
+    const parts=val.trim().split('.');
+    const initials=(parts[0]?parts[0][0]:'')+(parts[1]?parts[1][0]:'');
+    sp.textContent=initials.toUpperCase().slice(0,2)||val[0].toUpperCase();
+    av.classList.add('has-user');
+  } else {av.classList.remove('has-user');}
+}
+
+function doLogin(){
+  const btn=document.getElementById('login-btn');
+  const login=document.getElementById('lu').value.trim().toLowerCase();
+  const pw=document.getElementById('lp').value;
+  const err=document.getElementById('lerr');
+  if(!login||!pw){err.textContent='Preencha usuário e senha.';return;}
+  btn.textContent='Entrando...';btn.classList.add('loading');
+  setTimeout(()=>{
+    btn.textContent='Entrar';btn.classList.remove('loading');
+    const user=CFG.users.find(u=>u.login.toLowerCase()===login&&u.pw===pw&&u.ativo);
+    if(!user){
+      err.textContent='Usuário ou senha incorretos.';
+      const box=document.querySelector('.login-box');
+      box.style.animation='none';
+      setTimeout(()=>{box.style.animation='shake .4s ease';},10);
+      return;
+    }
+    SESSION=user;
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('uinfo').textContent=user.nome;
+    const rp=document.getElementById('rpill');rp.textContent=RL[user.role];rp.className='rpt rpt-'+user.role;
+    applyPerm();refresh();
+    atualizarSyncBar();
+    if(SP_CFG.url)sincronizarSP();
+    if(user.role==='md')nav('envios');
+  },400);
+}
+
+function logout(){
+  SESSION=null;
+  document.getElementById('login-wrap').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('lu').value='';
+  document.getElementById('lp').value='';
+  document.getElementById('lerr').textContent='';
+}
+
+function applyPerm(){
+  const r=SESSION.role;
+  const hide=ids=>ids.forEach(id=>{const el=document.getElementById(id);if(el){el.disabled=true;el.style.display='none';}});
+  if(r==='md')hide(['nb-lista','nb-novo','nb-revisao','nb-export','nb-config','nb-respostas']);
+  else if(r==='viewer')hide(['nb-novo','nb-revisao','nb-config']);
+  else if(r==='editor')hide(['nb-config']);
+}
+
+// ══════════════════════════════════════════════════
+// SHAREPOINT INTEGRATION
+// ══════════════════════════════════════════════════
+
+function getSpHeaders(){
+  // Usa as credenciais de sessão ativa do SharePoint no navegador
+  return {
+    'Accept':'application/json;odata=verbose',
+    'Content-Type':'application/json;odata=verbose'
+  };
+}
+
+function spApiUrl(lista){
+  return `${SP_CFG.url}/sites/${SP_CFG.site}/_api/web/lists/getbytitle('${encodeURIComponent(lista)}')/items`;
+}
+
+function atualizarSyncBar(){
+  const bar=document.getElementById('sync-bar');
+  const dot=document.getElementById('sync-dot');
+  const msg=document.getElementById('sync-msg');
+  if(!SP_CFG.url){
+    dot.className='sync-dot';dot.style.background='#d97706';
+    msg.textContent='SharePoint não configurado — clique em ⚙ Configurar para conectar';
+  } else {
+    dot.className='sync-dot';
+    msg.textContent=`Conectado: ${SP_CFG.url}/sites/${SP_CFG.site} · Lista: ${SP_CFG.listaContratos}`;
+  }
+}
+
+async function sincronizarSP(){
+  if(!SP_CFG.url||!SP_CFG.site||!SP_CFG.listaContratos){
+    atualizarSyncBar();return;
+  }
+  const dot=document.getElementById('sync-dot');
+  const msg=document.getElementById('sync-msg');
+  dot.className='sync-dot syncing';dot.style.background='#f59e0b';
+  msg.textContent='Sincronizando com SharePoint...';
+
+  try{
+    // Buscar contratos do SharePoint
+    const url=spApiUrl(SP_CFG.listaContratos)+'?$top=500&$orderby=Modified desc';
+    const resp=await fetch(url,{headers:getSpHeaders(),credentials:'include'});
+    if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
+    const json=await resp.json();
+    const items=json.d?.results||[];
+
+    if(items.length>0){
+      // Mapear itens do SharePoint para o formato interno
+      const novosData=items.map(item=>spItemParaContrato(item));
+      // Merge: manter contratos locais que não existem no SP, adicionar/atualizar os do SP
+      const spIds=novosData.map(r=>r.spId).filter(Boolean);
+      const locaisOrfaos=DATA.filter(r=>!r.spId||!spIds.includes(r.spId));
+      DATA=[...novosData,...locaisOrfaos.filter(r=>!r.spId)];
+      save();refresh();
+    }
+
+    // Buscar respostas do Forms (se configurado)
+    if(SP_CFG.listaRespostas){
+      await buscarRespostasForms();
+    }
+
+    dot.className='sync-dot';dot.style.background='#16a34a';
+    const agora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    msg.textContent=`Sincronizado às ${agora} · ${items.length} contrato(s) · Lista: ${SP_CFG.listaContratos}`;
+  }catch(e){
+    dot.className='sync-dot';dot.style.background='#dc2626';
+    msg.textContent=`Erro ao sincronizar: ${e.message} — verifique se está logada no SharePoint`;
+    console.error('SP sync error:',e);
+  }
+}
+
+async function buscarRespostasForms(){
+  try{
+    // Buscar respostas que ainda não foram processadas
+    // O Power Automate salva um campo "Processado" = false nas novas respostas
+    const url=spApiUrl(SP_CFG.listaRespostas)+'?$top=100&$filter=Processado eq false&$orderby=Created desc';
+    const resp=await fetch(url,{headers:getSpHeaders(),credentials:'include'});
+    if(!resp.ok)return;
+    const json=await resp.json();
+    const items=json.d?.results||[];
+
+    SP_RESPOSTAS_PENDENTES=items.map(item=>({
+      spId:item.ID,
+      nomeLider:item.NomeLider||item.Title||'',
+      empresa:item.Empresa||'',
+      colaboradoresPermanecem:item.ColaboradoresPermanecem||'',
+      quemSaiu:(item.QuemSaiu||'').split('\n').filter(x=>x.trim()),
+      novosColaboradores:(item.NovosColaboradores||'').split('\n').filter(x=>x.trim()),
+      dataResposta:item.Created||'',
+      contratoId:null // será resolvido ao renderizar
+    }));
+
+    // Tentar associar resposta ao contrato pelo nome do líder ou empresa
+    SP_RESPOSTAS_PENDENTES.forEach(resp=>{
+      const contrato=DATA.find(r=>
+        r.empresa.toLowerCase().includes(resp.empresa.toLowerCase()) ||
+        (r.lideres||[]).some(l=>l.nome.toLowerCase().includes(resp.nomeLider.toLowerCase()))
+      );
+      if(contrato)resp.contratoId=contrato.id;
+    });
+
+    // Atualizar badge
+    const badge=document.getElementById('resp-badge');
+    if(SP_RESPOSTAS_PENDENTES.length>0){
+      badge.textContent=SP_RESPOSTAS_PENDENTES.length;
+      badge.style.display='inline';
+    } else {
+      badge.style.display='none';
+    }
+
+    renderRespostas();
+  }catch(e){console.error('Erro ao buscar respostas:',e);}
+}
+
+function spItemParaContrato(item){
+  // Mapear colunas do SharePoint para o formato interno
+  // Nomes baseados na lista "Contratos - Off-limits" que você mostrou
+  const colaboradores=item.Colaboradores||'';
+  const liderNome=item.L_x00ed_derPrincipal||item.LiderPrincipal||item.Title||'';
+  const liderEmail=item.L_x00ed_derEmail||item.LiderEmail||'';
+
+  return{
+    id:item.ID,
+    spId:item.ID,
+    empresa:item.Empresa||item.Title||'',
+    lideres:[{nome:liderNome,email:liderEmail,principal:true}],
+    area:item._x00c1_rea||item.Area||'Geral',
+    inicio:item.In_x00ed_cioContrato||item.InicioContrato||'',
+    fim:item.FimContrato||'',
+    prazo:parseInt(item.Prazoofflimits||item.PrazoOffLimits||6)||6,
+    prazoRev:parseInt(item.PrazoRevis_x00e3_o||item.PrazoRevisao||0)||null,
+    envioTipo:'auto',
+    relacao:item.TipoContrato==='Lista Específica'?'lista':'geral',
+    lista:colaboradores.replace(/\s*\|\s*/g,'\n'),
+    obs:item.Observa_x00e7_ao||item.Observacao||'',
+    revisao:item._x00da_ltimaRevis_x00e3_o||item.UltimaRevisao||null,
+    historico:[],
+    status:item.Status||'Ativo'
+  };
+}
+
+async function salvarContratoNoSP(contrato){
+  if(!SP_CFG.url||!SP_CFG.site||!SP_CFG.listaContratos)return null;
+  try{
+    // Buscar o digest de segurança (necessário para POST/PATCH no SharePoint)
+    const digestResp=await fetch(`${SP_CFG.url}/sites/${SP_CFG.site}/_api/contextinfo`,{
+      method:'POST',headers:{'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose'},
+      credentials:'include'
+    });
+    const digestJson=await digestResp.json();
+    const digest=digestJson.d?.GetContextWebInformation?.FormDigestValue;
+    if(!digest)throw new Error('Não foi possível obter digest de segurança');
+
+    const lp=liderPrincipal(contrato);
+    const body={
+      __metadata:{type:'SP.Data.Contratos___x002d___Off_x002d_limitsListItem'},
+      Title:contrato.empresa,
+      Empresa:contrato.empresa,
+      LiderPrincipal:lp.nome,
+      LiderEmail:lp.email,
+      Colaboradores:contrato.lista.replace(/\n/g,' | '),
+      Status:contrato.relacao==='lista'?'Lista Específica':'Geral',
+      InicioContrato:contrato.inicio,
+      FimContrato:contrato.fim,
+      PrazoOffLimits:contrato.prazo,
+      PrazoRevisao:contrato.prazoRev||CFG.prazoGlobal||45,
+      UltimaRevisao:contrato.revisao||null,
+      Observacao:contrato.obs||''
+    };
+
+    let url,method;
+    if(contrato.spId){
+      url=spApiUrl(SP_CFG.listaContratos)+`(${contrato.spId})`;
+      method='MERGE';
+    } else {
+      url=spApiUrl(SP_CFG.listaContratos);
+      method='POST';
+    }
+
+    const resp=await fetch(url,{
+      method,
+      headers:{...getSpHeaders(),'X-RequestDigest':digest,'IF-MATCH':'*','X-HTTP-Method':method==='MERGE'?'MERGE':undefined},
+      credentials:'include',
+      body:JSON.stringify(body)
+    });
+
+    if(method==='POST'&&resp.ok){
+      const newItem=await resp.json();
+      return newItem.d?.ID||null;
+    }
+    return contrato.spId||null;
+  }catch(e){
+    console.error('Erro ao salvar no SP:',e);
+    return null;
+  }
+}
+
+async function marcarRespostaProcessada(spId){
+  if(!SP_CFG.listaRespostas)return;
+  try{
+    const digestResp=await fetch(`${SP_CFG.url}/sites/${SP_CFG.site}/_api/contextinfo`,{
+      method:'POST',headers:{'Accept':'application/json;odata=verbose','Content-Type':'application/json;odata=verbose'},
+      credentials:'include'
+    });
+    const digestJson=await digestResp.json();
+    const digest=digestJson.d?.GetContextWebInformation?.FormDigestValue;
+    if(!digest)return;
+
+    await fetch(spApiUrl(SP_CFG.listaRespostas)+`(${spId})`,{
+      method:'POST',
+      headers:{...getSpHeaders(),'X-RequestDigest':digest,'IF-MATCH':'*','X-HTTP-Method':'MERGE'},
+      credentials:'include',
+      body:JSON.stringify({__metadata:{type:'SP.Data.ListItem'},Processado:true})
+    });
+  }catch(e){console.error('Erro ao marcar resposta:',e);}
+}
+
+// ══════════════════════════════════════════════════
+// CONFIG SP MODAL
+// ══════════════════════════════════════════════════
+function abrirConfigSP(){
+  document.getElementById('sp-url').value=SP_CFG.url||'';
+  document.getElementById('sp-site').value=SP_CFG.site||'';
+  document.getElementById('sp-lista-contratos').value=SP_CFG.listaContratos||'Contratos - Off-limits';
+  document.getElementById('sp-lista-respostas').value=SP_CFG.listaRespostas||'';
+  document.getElementById('sp-modal-msg').textContent='';
+  document.getElementById('modal-sp-config').classList.add('open');
+}
+
+function salvarConfigSP(){
+  SP_CFG.url=document.getElementById('sp-url').value.trim().replace(/\/+$/,'');
+  SP_CFG.site=document.getElementById('sp-site').value.trim();
+  SP_CFG.listaContratos=document.getElementById('sp-lista-contratos').value.trim();
+  SP_CFG.listaRespostas=document.getElementById('sp-lista-respostas').value.trim();
+  saveSPCfg();
+  closeModal('modal-sp-config');
+  atualizarSyncBar();
+  sincronizarSP();
+  atualizarStatusConfigSP();
+}
+
+async function testarConexaoSP(){
+  const urlEl=document.getElementById('sp-url')||{value:SP_CFG.url};
+  const siteEl=document.getElementById('sp-site')||{value:SP_CFG.site};
+  const listaEl=document.getElementById('sp-lista-contratos')||{value:SP_CFG.listaContratos};
+  const msgEl=document.getElementById('sp-modal-msg')||document.getElementById('sp-test-msg');
+
+  const url=(urlEl.value||SP_CFG.url).trim().replace(/\/+$/,'');
+  const site=(siteEl.value||SP_CFG.site).trim();
+  const lista=(listaEl.value||SP_CFG.listaContratos).trim();
+
+  if(!url||!site||!lista){
+    if(msgEl){msgEl.style.color='#dc2626';msgEl.textContent='Preencha todos os campos antes de testar.';}
+    return;
+  }
+
+  if(msgEl){msgEl.style.color='#1e40af';msgEl.innerHTML='<span class="spinner"></span>Testando conexão...';}
+
+  try{
+    const testUrl=`${url}/sites/${site}/_api/web/lists/getbytitle('${encodeURIComponent(lista)}')/items?$top=1`;
+    const resp=await fetch(testUrl,{headers:getSpHeaders(),credentials:'include'});
+    if(resp.ok){
+      if(msgEl){msgEl.style.color='#16a34a';msgEl.textContent='✓ Conexão bem-sucedida! Lista encontrada.';}
+    } else if(resp.status===401){
+      if(msgEl){msgEl.style.color='#dc2626';msgEl.textContent='❌ Não autorizado. Abra o SharePoint no navegador e faça login primeiro.';}
+    } else if(resp.status===404){
+      if(msgEl){msgEl.style.color='#dc2626';msgEl.textContent=`❌ Lista não encontrada. Verifique o nome da lista: "${lista}"`;}
+    } else {
+      if(msgEl){msgEl.style.color='#dc2626';msgEl.textContent=`❌ Erro ${resp.status}. Verifique a URL e o nome do site.`;}
+    }
+  }catch(e){
+    if(msgEl){
+      if(e.message.includes('Failed to fetch')||e.message.includes('CORS')){
+        msgEl.style.color='#dc2626';
+        msgEl.textContent='❌ Erro de conexão. Certifique-se de estar logada no SharePoint neste mesmo navegador.';
+      } else {
+        msgEl.style.color='#dc2626';msgEl.textContent=`❌ Erro: ${e.message}`;
+      }
+    }
+  }
+}
+
+function atualizarStatusConfigSP(){
+  const el=document.getElementById('sp-status-config');
+  if(!el)return;
+  if(SP_CFG.url){
+    el.innerHTML=`<div class="alert success">✓ Configurado: <b>${SP_CFG.url}/sites/${SP_CFG.site}</b> · Lista: <b>${SP_CFG.listaContratos}</b>${SP_CFG.listaRespostas?` · Respostas: <b>${SP_CFG.listaRespostas}</b>`:''}</div>`;
+  } else {
+    el.innerHTML=`<div class="alert warn">⚠ SharePoint não configurado. Configure para sincronizar automaticamente.</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RENDER RESPOSTAS DO FORMS
+// ══════════════════════════════════════════════════
+function renderRespostas(){
+  const el=document.getElementById('respostas-content');if(!el)return;
+
+  if(!SP_CFG.listaRespostas){
+    el.innerHTML=`<div class="alert info">
+      <b>Configure a lista de respostas:</b> Vá em Configurações → Integração SharePoint e informe o nome da lista onde o Power Automate salva as respostas do Forms.
+      <br><br>
+      <b>Dica:</b> No Power Automate, configure o fluxo para salvar as respostas do Forms em uma lista do SharePoint com as colunas: <b>NomeLider, Empresa, ColaboradoresPermanecem, QuemSaiu, NovosColaboradores, Processado</b>.
+      <br><br>
+      <a onclick="abrirConfigSP()">⚙ Configurar agora →</a>
+    </div>`;
+    return;
+  }
+
+  if(!SP_RESPOSTAS_PENDENTES.length){
+    el.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <p class="empty" style="margin:0">✓ Nenhuma resposta pendente no momento.</p>
+        <button class="sbtn" onclick="sincronizarSP()">↻ Verificar novas respostas</button>
+      </div>
+      <div class="alert info">As respostas do Microsoft Forms chegam aqui automaticamente quando o Power Automate processa o formulário. Clique em "Verificar" para buscar agora.</div>`;
+    return;
+  }
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <span style="font-size:13px;color:#666">${SP_RESPOSTAS_PENDENTES.length} resposta(s) aguardando aplicação</span>
+      <button class="sbtn" onclick="sincronizarSP()">↻ Verificar novas respostas</button>
+    </div>
+    ${SP_RESPOSTAS_PENDENTES.map((resp,idx)=>renderRespostaCard(resp,idx)).join('')}`;
+}
+
+function renderRespostaCard(resp,idx){
+  const contrato=resp.contratoId?DATA.find(r=>r.id===resp.contratoId):null;
+  const temSaindo=resp.quemSaiu.length>0;
+  const temNovos=resp.novosColaboradores.length>0;
+  const dataFormatada=resp.dataResposta?new Date(resp.dataResposta).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+
+  return`<div class="resp-pendente-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:#1a1a2e">${resp.nomeLider||'(sem nome)'}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">${dataFormatada}</div>
+      </div>
+      ${contrato?`<span class="badge b-ativo">${contrato.empresa}</span>`:`<span class="badge" style="background:#fee2e2;color:#991b1b">Empresa não identificada</span>`}
+    </div>
+
+    <div style="font-size:12px;color:#666;margin-bottom:8px">
+      <b>Pergunta 2:</b> Colaboradores permanecem ativos? → <b>${resp.colaboradoresPermanecem||'—'}</b>
+    </div>
+
+    ${temSaindo?`<div style="margin-bottom:8px">
+      <div style="font-size:12px;color:#666;margin-bottom:4px"><b>Quem saiu:</b></div>
+      <div class="resp-diff">${resp.quemSaiu.map(n=>`<span class="saiu-chip">✗ ${n}</span>`).join('')}</div>
+    </div>`:''}
+
+    ${temNovos?`<div style="margin-bottom:8px">
+      <div style="font-size:12px;color:#666;margin-bottom:4px"><b>Novos colaboradores:</b></div>
+      <div class="resp-diff">${resp.novosColaboradores.map(n=>`<span class="novo-chip">+ ${n}</span>`).join('')}</div>
+    </div>`:''}
+
+    ${!temSaindo&&!temNovos?`<div class="alert success" style="margin-bottom:8px">✓ Sem alterações — todos permanecem ativos.</div>`:''}
+
+    ${!contrato?`<div style="margin-bottom:10px">
+      <div class="field">
+        <label>Associar a qual contrato?</label>
+        <select id="resp-assoc-${idx}" style="width:100%;padding:8px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px">
+          <option value="">Selecione o contrato...</option>
+          ${DATA.filter(r=>r.relacao==='lista').map(r=>`<option value="${r.id}">${r.empresa} — ${liderPrincipal(r).nome}</option>`).join('')}
+        </select>
+      </div>
+    </div>`:''}
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="pbtn" style="font-size:12px;padding:7px 14px" onclick="abrirAplicarResposta(${idx})">✓ Revisar e aplicar</button>
+      <button class="sbtn" style="font-size:12px;padding:7px 14px" onclick="ignorarResposta(${idx})">Ignorar</button>
+    </div>
+  </div>`;
+}
+
+function abrirAplicarResposta(idx){
+  const resp=SP_RESPOSTAS_PENDENTES[idx];
+
+  // Verificar se foi associado manualmente
+  const selEl=document.getElementById(`resp-assoc-${idx}`);
+  if(selEl&&selEl.value)resp.contratoId=parseInt(selEl.value);
+
+  if(!resp.contratoId){
+    alert('Selecione o contrato para associar esta resposta.');return;
+  }
+
+  const contrato=DATA.find(r=>r.id===resp.contratoId);
+  if(!contrato){alert('Contrato não encontrado.');return;}
+
+  const colsAtuais=contrato.lista.split('\n').filter(x=>x.trim());
+  const saindo=resp.quemSaiu;
+  const novos=resp.novosColaboradores;
+  const listaFinal=colsAtuais.filter(c=>!saindo.some(s=>c.toLowerCase().includes(s.toLowerCase()))).concat(novos);
+
+  document.getElementById('mar-resp-idx').value=idx;
+  document.getElementById('mar-sub').textContent=`Contrato: ${contrato.empresa} — ${liderPrincipal(contrato).nome}`;
+
+  let html=`<div style="margin-bottom:14px">
+    <p style="font-size:12px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">Lista atual (${colsAtuais.length} colaboradores)</p>
+    <div class="chips">${colsAtuais.map(c=>{
+      const removido=saindo.some(s=>c.toLowerCase().includes(s.toLowerCase()));
+      return`<span class="chip${removido?' saiu':''}">${c}</span>`;
+    }).join('')}</div>
+  </div>`;
+
+  if(saindo.length){
+    html+=`<div class="alert danger" style="margin-bottom:10px">✗ Serão removidos: <b>${saindo.join(', ')}</b></div>`;
+  }
+  if(novos.length){
+    html+=`<div class="alert success" style="margin-bottom:10px">+ Serão adicionados: <b>${novos.join(', ')}</b></div>`;
+  }
+
+  html+=`<div style="margin-top:14px">
+    <p style="font-size:12px;font-weight:600;color:#888;text-transform:uppercase;margin-bottom:8px">Lista final (${listaFinal.length} colaboradores)</p>
+    <div class="chips">${listaFinal.map(c=>{
+      const isNovo=novos.some(n=>c.toLowerCase()===n.toLowerCase());
+      return`<span class="chip${isNovo?' novo':''}">${c}</span>`;
+    }).join('')}</div>
+  </div>`;
+
+  document.getElementById('mar-content').innerHTML=html;
+  document.getElementById('modal-aplicar-resp').classList.add('open');
+}
+
+async function confirmarAplicarResposta(){
+  const idx=parseInt(document.getElementById('mar-resp-idx').value);
+  const resp=SP_RESPOSTAS_PENDENTES[idx];
+  const contrato=DATA.find(r=>r.id===resp.contratoId);
+  if(!contrato)return;
+
+  const colsAtuais=contrato.lista.split('\n').filter(x=>x.trim());
+  const saindo=resp.quemSaiu;
+  const novos=resp.novosColaboradores;
+  const listaFinal=colsAtuais.filter(c=>!saindo.some(s=>c.toLowerCase().includes(s.toLowerCase()))).concat(novos);
+
+  const idx2=DATA.findIndex(r=>r.id===resp.contratoId);
+  DATA[idx2].lista=listaFinal.join('\n');
+  DATA[idx2].revisao=new Date().toISOString().split('T')[0];
+
+  let desc=`Resposta do Forms aplicada — líder: ${resp.nomeLider}`;
+  if(saindo.length)desc+=` | saíram: ${saindo.join(', ')}`;
+  if(novos.length)desc+=` | adicionados: ${novos.join(', ')}`;
+  registrarHistorico(resp.contratoId,desc);
+  save();
+
+  // Salvar no SharePoint
+  if(SP_CFG.url){
+    const btn=document.getElementById('mar-btn-aplicar');
+    btn.disabled=true;btn.textContent='Salvando no SharePoint...';
+    await salvarContratoNoSP(DATA[idx2]);
+    if(resp.spId)await marcarRespostaProcessada(resp.spId);
+  }
+
+  // Remover da lista de pendentes
+  SP_RESPOSTAS_PENDENTES.splice(idx,1);
+  const badge=document.getElementById('resp-badge');
+  if(SP_RESPOSTAS_PENDENTES.length>0){badge.textContent=SP_RESPOSTAS_PENDENTES.length;}
+  else{badge.style.display='none';}
+
+  closeModal('modal-aplicar-resp');
+  refresh();
+  renderRespostas();
+  alert(`✓ Lista de ${contrato.empresa} atualizada com sucesso!`);
+}
+
+function ignorarResposta(idx){
+  if(!confirm('Ignorar esta resposta? Ela não será processada.'))return;
+  SP_RESPOSTAS_PENDENTES.splice(idx,1);
+  const badge=document.getElementById('resp-badge');
+  if(SP_RESPOSTAS_PENDENTES.length>0){badge.textContent=SP_RESPOSTAS_PENDENTES.length;}
+  else{badge.style.display='none';}
+  renderRespostas();
+}
+
+// ══════════════════════════════════════════════════
+// UTILS DATA
+// ══════════════════════════════════════════════════
+function pd(s){if(!s)return null;const[y,m,d]=s.split('-');return new Date(+y,+m-1,+d);}
+function fd(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function addM(d,n){const r=new Date(d);r.setMonth(r.getMonth()+n);return r;}
+function today(){return new Date();}
+function olEnd(r){const f=pd(r.fim);return f?addM(f,parseInt(r.prazo)||0):null;}
+function status(r){const e=olEnd(r);if(!e||e<today())return'expirado';const d30=new Date();d30.setDate(d30.getDate()+30);return e<=d30?'vencendo':'ativo';}
+function diasR(r){const e=olEnd(r);return e?Math.round((e-today())/86400000):-9999;}
+function prazoRev(r){return r.prazoRev||CFG.prazoGlobal||45;}
+function needsRev(r){
+  if(status(r)==='expirado'||r.relacao!=='lista')return false;
+  if(!r.revisao)return true;
+  return(today()-pd(r.revisao))/86400000>=prazoRev(r);
+}
+function pct(r){const s=pd(r.inicio),e=olEnd(r);if(!s||!e)return 100;return Math.min(100,Math.max(0,Math.round((today()-s)/(e-s)*100)));}
+function liderPrincipal(r){return(r.lideres||[]).find(l=>l.principal)||r.lideres[0]||{nome:'—',email:''};}
+function diasLabel(r){const d=diasR(r),s=status(r);if(s==='expirado')return`<span class="dias-bad">Expirado há ${Math.abs(d)} dias</span>`;if(d<30)return`<span class="dias-warn">${d} dias restantes</span>`;return`<span class="dias-ok">${d} dias restantes</span>`;}
+function progColor(r){return{ativo:'#16a34a',vencendo:'#d97706',expirado:'#d1d5db'}[status(r)];}
+function stBadge(r){
+  const s=status(r);
+  let h=`<span class="badge b-${s}">${{ativo:'Ativo',vencendo:'Vencendo',expirado:'Expirado'}[s]}</span>`;
+  if(needsRev(r))h+=`<span class="badge b-revisao">Revisão pendente</span>`;
+  h+=`<span class="badge b-${r.relacao}">${r.relacao==='geral'?'Geral':'Lista específica'}</span>`;
+  h+=`<span class="badge b-area">${r.area}</span>`;
+  return h;
+}
+
+function cardHTML(r,showObs,showActions){
+  const cols=r.lista?r.lista.split('\n').filter(x=>x.trim()):[];
+  const lp=liderPrincipal(r);
+  const canEdit=SESSION&&(SESSION.role==='admin'||SESSION.role==='editor');
+  const prazoD=prazoRev(r);
+  let actions='';
+  if(showActions&&canEdit)actions=`<div class="card-actions">
+    <span class="alink" onclick="abrirModalEdit(${r.id})">Editar</span>
+    <span class="alink" onclick="nav('envios');setTimeout(()=>filtrarEnvio(${r.id}),100)">Enviar formulário</span>
+    <span class="alink red" onclick="excluir(${r.id})">Excluir</span>
+  </div>`;
+  return`<div class="card"><div class="card-top"><span class="cname">${r.empresa}</span><div class="badges">${stBadge(r)}</div></div>
+    <div class="meta">
+      <span>Contrato: ${fd(r.inicio)} — ${fd(r.fim)}</span>
+      <span>Off-limit: +${r.prazo} mês(es)</span>
+      <span>Líder: ${lp.nome}</span>
+      <span>Revisão: a cada ${prazoD} dias</span>
+      ${status(r)!=='expirado'?diasLabel(r):''}
+    </div>
+    <div class="prog"><div class="progbar" style="width:${pct(r)}%;background:${progColor(r)}"></div></div>
+    ${cols.length?`<div class="chips">${cols.map(c=>`<span class="chip">${c}</span>`).join('')}</div>`:''}
+    ${showObs&&r.obs?`<p class="obs-text">${r.obs}</p>`:''}
+    ${actions}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+function refresh(){renderDash();renderLista();renderRevisao();renderEnvios();renderRespostas();populateAreaSelects();}
+
+function renderDash(){
+  const at=DATA.filter(r=>status(r)==='ativo').length,ve=DATA.filter(r=>status(r)==='vencendo').length,ex=DATA.filter(r=>status(r)==='expirado').length,rv=DATA.filter(r=>needsRev(r)).length;
+  document.getElementById('mets').innerHTML=`
+    <div class="metric"><div class="lbl">Ativos</div><div class="val ok">${at}</div></div>
+    <div class="metric"><div class="lbl">Vencendo</div><div class="val warn">${ve}</div></div>
+    <div class="metric"><div class="lbl">Expirados</div><div class="val">${ex}</div></div>
+    <div class="metric"><div class="lbl">Revisão pendente</div><div class="val bad">${rv}</div></div>
+    <div class="metric"><div class="lbl">Forms pendentes</div><div class="val ${SP_RESPOSTAS_PENDENTES.length?'bad':'ok'}">${SP_RESPOSTAS_PENDENTES.length}</div></div>
+    <div class="metric"><div class="lbl">Total</div><div class="val inf">${DATA.length}</div></div>`;
+  let al='';
+  if(SP_RESPOSTAS_PENDENTES.length)al+=`<div class="alert warn"><b>${SP_RESPOSTAS_PENDENTES.length} resposta(s) do Forms</b> aguardam aplicação. <a onclick="nav('respostas')">Aplicar agora →</a></div>`;
+  if(ve)al+=`<div class="alert warn"><b>Atenção:</b> ${ve} contrato(s) vence(m) nos próximos 30 dias.</div>`;
+  if(rv)al+=`<div class="alert danger"><b>${rv} lista(s)</b> aguardam revisão. <a onclick="nav('revisao')">Ver →</a></div>`;
+  document.getElementById('dash-alerts').innerHTML=al;
+  const showObs=SESSION&&(SESSION.role==='admin'||SESSION.role==='editor');
+  const list=DATA.filter(r=>status(r)==='ativo').slice(0,5);
+  document.getElementById('dash-cards').innerHTML=list.length?list.map(r=>cardHTML(r,showObs,false)).join(''):`<p class="empty">Nenhum contrato ativo.</p>`;
+}
+
+function renderLista(){
+  const b=(document.getElementById('busca')||{value:''}).value.toLowerCase();
+  const fs=document.getElementById('fst').value,fa=document.getElementById('farea').value,fr=document.getElementById('frel').value;
+  const showObs=SESSION&&(SESSION.role==='admin'||SESSION.role==='editor');
+  const f=DATA.filter(r=>{
+    if(b&&!r.empresa.toLowerCase().includes(b)&&!liderPrincipal(r).nome.toLowerCase().includes(b)&&!r.lista.toLowerCase().includes(b))return false;
+    if(fs&&status(r)!==fs)return false;if(fa&&r.area!==fa)return false;if(fr&&r.relacao!==fr)return false;return true;
+  });
+  document.getElementById('lista-cards').innerHTML=f.length?f.map(r=>cardHTML(r,showObs,true)).join(''):`<p class="empty">Nenhum resultado.</p>`;
+}
+
+function renderRevisao(){
+  const pend=DATA.filter(r=>needsRev(r));
+  const el=document.getElementById('rev-cards');if(!el)return;
+  if(!pend.length){el.innerHTML=`<p class="empty" style="color:#16a34a">✓ Todas as listas estão em dia.</p>`;return;}
+  el.innerHTML=pend.map(r=>{
+    const lp=liderPrincipal(r);
+    const cols=r.lista.split('\n').filter(x=>x.trim());
+    const pr=prazoRev(r);
+    return`<div class="card">
+      <div class="card-top"><span class="cname">${r.empresa}</span><span class="badge b-revisao">Revisão pendente</span></div>
+      <div class="meta"><span>Líder: ${lp.nome}</span><span>Revisão: a cada ${pr} dias</span><span>Última: ${r.revisao?fd(r.revisao):'Nunca'}</span></div>
+      ${cols.length?`<div class="chips">${cols.map(c=>`<span class="chip">${c}</span>`).join('')}</div>`:''}
+      <div class="card-actions">
+        <span class="alink" onclick="nav('envios');setTimeout(()=>filtrarEnvio(${r.id}),100)">Enviar formulário MD</span>
+        <span class="alink" onclick="marcarRev(${r.id})">✓ Marcar revisado</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let filtroEnvioId=null;
+function filtrarEnvio(id){filtroEnvioId=id;renderEnvios();}
+
+function renderEnvios(){
+  const el=document.getElementById('envios-content');if(!el)return;
+  const pend=DATA.filter(r=>r.relacao==='lista'&&status(r)!=='expirado');
+  if(!pend.length){el.innerHTML=`<p class="empty">Nenhum contrato com lista específica ativo.</p>`;return;}
+  const list=filtroEnvioId?pend.filter(r=>r.id===filtroEnvioId):pend;
+  if(filtroEnvioId){
+    el.innerHTML=`<div style="margin-bottom:12px"><span class="alink" onclick="filtroEnvioId=null;renderEnvios()">← Ver todos</span></div>`+list.map(r=>envioCardHTML(r)).join('');
+  } else {
+    el.innerHTML=`<div class="filters" style="margin-bottom:14px">
+      <input type="text" id="env-busca" placeholder="Filtrar por empresa..." oninput="renderEnviosFiltro()">
+      <select id="env-rev" onchange="renderEnviosFiltro()"><option value="">Todos</option><option value="pendente">Revisão pendente</option></select>
+    </div><div id="env-list">`+list.map(r=>envioCardHTML(r)).join('')+'</div>';
+  }
+}
+
+function renderEnviosFiltro(){
+  const b=(document.getElementById('env-busca')||{value:''}).value.toLowerCase();
+  const rev=(document.getElementById('env-rev')||{value:''}).value;
+  const pend=DATA.filter(r=>r.relacao==='lista'&&status(r)!=='expirado');
+  const f=pend.filter(r=>{
+    if(b&&!r.empresa.toLowerCase().includes(b))return false;
+    if(rev==='pendente'&&!needsRev(r))return false;
+    return true;
+  });
+  document.getElementById('env-list').innerHTML=f.length?f.map(r=>envioCardHTML(r)).join(''):`<p class="empty">Nenhum resultado.</p>`;
+}
+
+function envioCardHTML(r){
+  const lp=liderPrincipal(r);
+  const outrosLideres=(r.lideres||[]).filter(l=>!l.principal);
+  const cols=r.lista.split('\n').filter(x=>x.trim());
+  const pendente=needsRev(r);
+  return`<div class="envio-card">
+    <div class="envio-top">
+      <div>
+        <span style="font-size:15px;font-weight:600;color:#1a1a2e">${r.empresa}</span>
+        ${pendente?'<span class="badge b-revisao" style="margin-left:8px">Revisão pendente</span>':''}
+      </div>
+      <div class="badges">
+        <span class="badge b-area">${r.area}</span>
+        <span class="badge" style="background:#f3f4f6;color:#374151">${r.envioTipo==='auto'?'Envio automático':'Envio manual'}</span>
+      </div>
+    </div>
+    <div class="meta" style="margin-bottom:10px">
+      <span>Líder principal: <b>${lp.nome}</b> (${lp.email})</span>
+      ${outrosLideres.length?`<span>Outros: ${outrosLideres.map(l=>l.nome).join(', ')}</span>`:''}
+      <span>Última revisão: ${r.revisao?fd(r.revisao):'Nunca'}</span>
+      <span>Prazo: a cada ${prazoRev(r)} dias</span>
+    </div>
+    ${cols.length?`<div class="chips" style="margin-bottom:10px">${cols.map(c=>`<span class="chip">${c}</span>`).join('')}</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="pbtn" style="font-size:12px;padding:7px 14px" onclick="abrirPrevia(${r.id})">Visualizar e enviar</button>
+      <button class="sbtn" style="font-size:12px;padding:7px 14px" onclick="abrirModalResp(${r.id})">Registrar resposta manual</button>
+      <button class="sbtn" style="font-size:12px;padding:7px 14px" onclick="marcarRev(${r.id})">✓ Marcar revisado</button>
+    </div>
+    ${r.historico&&r.historico.length?`<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f3f4f6">
+      <p style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Histórico</p>
+      ${r.historico.slice(-3).reverse().map(h=>`<div class="hist-item"><div class="hist-dot"></div><span class="hist-data">${fd(h.data)}</span><span>${h.acao}</span></div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function gerarTextoEmail(id){
+  const r=DATA.find(x=>x.id===id);if(!r)return{assunto:'',para:'',corpo:''};
+  const lp=liderPrincipal(r);
+  const cols=r.lista.split('\n').filter(x=>x.trim());
+  const prazoD=new Date();prazoD.setDate(prazoD.getDate()+5);
+  const assunto=`Confirmação periódica de lista de colaboradores — ação necessária`;
+  const corpo=`Olá, ${lp.nome},\n\nGostaríamos de solicitar sua confirmação sobre uma lista de colaboradores de um de nossos clientes em comum. Esta é uma verificação periódica e leva menos de 2 minutos.\n\nPor favor, responda este e-mail informando:\n1. Quais colaboradores abaixo ainda estão ativos na empresa cliente\n2. Se algum deles saiu desde a última confirmação\n3. Se há novos colaboradores a incluir na lista\n\nColaboradores:\n${cols.map((c,i)=>`${i+1}. ${c}`).join('\n')}\n\nPrazo para resposta: ${prazoD.toLocaleDateString('pt-BR')}\n\nAtenciosamente,\nEquipe de Recursos Humanos`;
+  return{assunto,para:lp.email,nomeDestinatario:lp.nome,corpo};
+}
+
+function abrirPrevia(id){
+  const r=DATA.find(x=>x.id===id);if(!r)return;
+  const {assunto,para,nomeDestinatario,corpo}=gerarTextoEmail(id);
+  document.getElementById('prev-id').value=id;
+  document.getElementById('prev-para').value=para;
+  document.getElementById('prev-nome').textContent=nomeDestinatario;
+  document.getElementById('prev-assunto').value=assunto;
+  document.getElementById('prev-corpo').value=corpo;
+  document.getElementById('modal-previa').classList.add('open');
+}
+
+function enviarDoModal(){
+  const id=parseInt(document.getElementById('prev-id').value);
+  const para=document.getElementById('prev-para').value.trim();
+  const assunto=document.getElementById('prev-assunto').value.trim();
+  const corpo=document.getElementById('prev-corpo').value.trim();
+  if(!para){alert('Email do destinatário não pode estar vazio.');return;}
+  window.open(`mailto:${para}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`,'_blank');
+  registrarHistorico(id,`E-mail aberto no Outlook para ${para}`);
+  save();closeModal('modal-previa');renderEnvios();
+}
+
+function copiarDoModal(){
+  const assunto=document.getElementById('prev-assunto').value.trim();
+  const corpo=document.getElementById('prev-corpo').value.trim();
+  const id=parseInt(document.getElementById('prev-id').value);
+  navigator.clipboard.writeText(`Assunto: ${assunto}\n\n${corpo}`)
+    .then(()=>{registrarHistorico(id,'Texto do e-mail copiado');save();alert('Texto copiado! Cole no Outlook.');})
+    .catch(()=>alert('Não foi possível copiar automaticamente.'));
+}
+
+function abrirModalResp(id){
+  const r=DATA.find(x=>x.id===id);if(!r)return;
+  document.getElementById('resp-id').value=id;
+  document.getElementById('resp-novos').value='';
+  document.getElementById('resp-obs').value='';
+  const cols=r.lista.split('\n').filter(x=>x.trim());
+  document.getElementById('resp-lista').innerHTML=`
+    <p style="font-size:13px;font-weight:600;margin-bottom:10px">Marque quem saiu da empresa:</p>
+    <div style="border:1px solid #e5e5e5;border-radius:8px;overflow:hidden">
+      ${cols.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #f3f4f6">
+        <input type="checkbox" id="resp-chk-${i}" style="width:15px;height:15px;accent-color:#dc2626">
+        <label for="resp-chk-${i}" style="font-size:13px">${c} <span style="font-size:11px;color:#888">(marque se saiu)</span></label>
+      </div>`).join('')}
+    </div>`;
+  document.getElementById('modal-resp').classList.add('open');
+}
+
+function salvarResposta(){
+  const id=parseInt(document.getElementById('resp-id').value);
+  const r=DATA.find(x=>x.id===id);if(!r)return;
+  const cols=r.lista.split('\n').filter(x=>x.trim());
+  const saindo=cols.filter((_,i)=>document.getElementById(`resp-chk-${i}`)?.checked);
+  const novosRaw=document.getElementById('resp-novos').value.trim();
+  const novos=novosRaw?novosRaw.split('\n').filter(x=>x.trim()):[];
+  const obs=document.getElementById('resp-obs').value.trim();
+  const listaFinal=[...cols.filter(c=>!saindo.includes(c)),...novos];
+  const idx=DATA.findIndex(x=>x.id===id);
+  DATA[idx].lista=listaFinal.join('\n');
+  DATA[idx].revisao=new Date().toISOString().split('T')[0];
+  let desc=`Resposta manual registrada`;
+  if(saindo.length)desc+=` — saíram: ${saindo.join(', ')}`;
+  if(novos.length)desc+=` — adicionados: ${novos.join(', ')}`;
+  if(obs)desc+=` — obs: ${obs}`;
+  registrarHistorico(id,desc);
+  // Salvar no SP também
+  if(SP_CFG.url)salvarContratoNoSP(DATA[idx]);
+  save();closeModal('modal-resp');refresh();
+}
+
+function registrarHistorico(id,acao){
+  const idx=DATA.findIndex(r=>r.id===id);if(idx<0)return;
+  if(!DATA[idx].historico)DATA[idx].historico=[];
+  DATA[idx].historico.push({data:new Date().toISOString().split('T')[0],acao,user:SESSION?SESSION.login:'sistema'});
+}
+
+function marcarRev(id){
+  const idx=DATA.findIndex(r=>r.id===id);
+  if(idx>-1){DATA[idx].revisao=new Date().toISOString().split('T')[0];registrarHistorico(id,'Marcado como revisado');
+    if(SP_CFG.url)salvarContratoNoSP(DATA[idx]);save();}
+  refresh();
+}
+
+// ══════════════════════════════════════════════════
+// LIDERES FORM
+// ══════════════════════════════════════════════════
+let formLideres=[];
+function initLideresForm(){formLideres=[{nome:'',email:'',principal:true}];renderLideresForm();}
+function renderLideresForm(){
+  document.getElementById('lideres-form').innerHTML=formLideres.map((l,i)=>`
+    <div class="lider-row" style="align-items:flex-end">
+      ${l.principal?`<span class="lider-principal">Principal</span>`:`<button class="sbtn" style="font-size:11px;padding:4px 8px" onclick="setPrincipal(${i})">Definir principal</button>`}
+      <div class="field" style="flex:1;min-width:140px;margin:0"><label>Nome</label><input type="text" value="${l.nome}" oninput="formLideres[${i}].nome=this.value" placeholder="Nome do líder"></div>
+      <div class="field" style="flex:1;min-width:140px;margin:0"><label>Email</label><input type="email" value="${l.email}" oninput="formLideres[${i}].email=this.value" placeholder="email@empresa.com"></div>
+      ${formLideres.length>1?`<button class="dbtn" onclick="removeLiderForm(${i})">×</button>`:''}
+    </div>`).join('');
+}
+function addLiderForm(){formLideres.push({nome:'',email:'',principal:false});renderLideresForm();}
+function removeLiderForm(i){formLideres.splice(i,1);if(!formLideres.find(l=>l.principal)&&formLideres.length)formLideres[0].principal=true;renderLideresForm();}
+function setPrincipal(i){formLideres.forEach((l,j)=>l.principal=(j===i));renderLideresForm();}
+
+let modalLideres=[];
+function renderMeLideres(){
+  document.getElementById('me-lideres').innerHTML=modalLideres.map((l,i)=>`
+    <div class="lider-row" style="align-items:flex-end">
+      ${l.principal?`<span class="lider-principal">Principal</span>`:`<button class="sbtn" style="font-size:11px;padding:4px 8px" onclick="setMePrincipal(${i})">Principal</button>`}
+      <div class="field" style="flex:1;min-width:120px;margin:0"><label>Nome</label><input type="text" value="${l.nome}" oninput="modalLideres[${i}].nome=this.value"></div>
+      <div class="field" style="flex:1;min-width:120px;margin:0"><label>Email</label><input type="email" value="${l.email}" oninput="modalLideres[${i}].email=this.value"></div>
+      ${modalLideres.length>1?`<button class="dbtn" onclick="removeMeLider(${i})">×</button>`:''}
+    </div>`).join('');
+}
+function addMeLider(){modalLideres.push({nome:'',email:'',principal:false});renderMeLideres();}
+function removeMeLider(i){modalLideres.splice(i,1);if(!modalLideres.find(l=>l.principal)&&modalLideres.length)modalLideres[0].principal=true;renderMeLideres();}
+function setMePrincipal(i){modalLideres.forEach((l,j)=>l.principal=(j===i));renderMeLideres();}
+
+// ══════════════════════════════════════════════════
+// CRUD
+// ══════════════════════════════════════════════════
+async function salvar(){
+  const e=document.getElementById('fe').value.trim(),a=document.getElementById('fa').value,i=document.getElementById('fi').value,f=document.getElementById('ff').value,r=document.getElementById('fr').value;
+  const msg=document.getElementById('fmsg');
+  if(!e||!a||!i||!f||!r){msg.style.color='#dc2626';msg.textContent='Preencha todos os campos obrigatórios.';return;}
+  if(!formLideres.some(l=>l.nome.trim())){msg.style.color='#dc2626';msg.textContent='Adicione pelo menos um líder MD.';return;}
+  const prazoRevVal=parseInt(document.getElementById('frev').value)||null;
+  const novoContrato={
+    id:Date.now(),spId:null,
+    empresa:e,lideres:formLideres.map(l=>({...l})),area:a,inicio:i,fim:f,
+    prazo:parseInt(document.getElementById('fp').value)||6,
+    prazoRev:prazoRevVal,envioTipo:document.getElementById('fenvio').value,
+    relacao:r,lista:document.getElementById('fl').value.trim(),
+    obs:document.getElementById('fo').value.trim(),revisao:null,historico:[]
+  };
+  DATA.push(novoContrato);
+  save();
+
+  // Salvar no SharePoint
+  if(SP_CFG.url){
+    const btn=document.getElementById('btn-salvar');
+    btn.disabled=true;btn.textContent='Salvando no SharePoint...';
+    const spId=await salvarContratoNoSP(novoContrato);
+    if(spId){
+      const idx=DATA.findIndex(x=>x.id===novoContrato.id);
+      if(idx>-1)DATA[idx].spId=spId;
+      save();
+    }
+    btn.disabled=false;btn.textContent='Salvar contrato';
+  }
+
+  msg.style.color='#16a34a';msg.textContent='Contrato salvo!'+(SP_CFG.url?' e enviado ao SharePoint.':'');
+  ['fe','fi','ff','fl','fo'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('fa').value='';document.getElementById('fr').value='';document.getElementById('fp').value='6';
+  document.getElementById('frev').value='';document.getElementById('fenvio').value='manual';
+  document.getElementById('lista-block').style.display='none';
+  initLideresForm();setTimeout(()=>{msg.textContent='';},3000);refresh();
+}
+
+function toggleListaBlock(){document.getElementById('lista-block').style.display=document.getElementById('fr').value==='lista'?'block':'none';}
+function toggleModalLista(){document.getElementById('me-lista-block').style.display=document.getElementById('me-relacao').value==='lista'?'block':'none';}
+function excluir(id){if(!confirm('Excluir este contrato?'))return;DATA=DATA.filter(r=>r.id!==id);save();refresh();}
+
+function abrirModalEdit(id){
+  const r=DATA.find(x=>x.id===id);if(!r)return;
+  populateAreaSelects();
+  document.getElementById('me-id').value=id;
+  document.getElementById('me-empresa').value=r.empresa;
+  document.getElementById('me-area').value=r.area;
+  document.getElementById('me-inicio').value=r.inicio;
+  document.getElementById('me-fim').value=r.fim;
+  document.getElementById('me-prazo').value=r.prazo;
+  document.getElementById('me-rev').value=r.prazoRev||'';
+  document.getElementById('me-envio').value=r.envioTipo||'manual';
+  document.getElementById('me-relacao').value=r.relacao;
+  document.getElementById('me-lista').value=r.lista||'';
+  document.getElementById('me-obs').value=r.obs||'';
+  document.getElementById('me-lista-block').style.display=r.relacao==='lista'?'block':'none';
+  modalLideres=(r.lideres||[]).map(l=>({...l}));
+  renderMeLideres();
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+async function salvarEdicao(){
+  const id=parseInt(document.getElementById('me-id').value);
+  const idx=DATA.findIndex(r=>r.id===id);if(idx<0)return;
+  const prazoRevVal=parseInt(document.getElementById('me-rev').value)||null;
+  DATA[idx]={...DATA[idx],
+    empresa:document.getElementById('me-empresa').value.trim(),
+    area:document.getElementById('me-area').value,
+    inicio:document.getElementById('me-inicio').value,
+    fim:document.getElementById('me-fim').value,
+    prazo:parseInt(document.getElementById('me-prazo').value)||6,
+    prazoRev:prazoRevVal,
+    envioTipo:document.getElementById('me-envio').value,
+    relacao:document.getElementById('me-relacao').value,
+    lista:document.getElementById('me-lista').value.trim(),
+    obs:document.getElementById('me-obs').value.trim(),
+    lideres:modalLideres.map(l=>({...l}))
+  };
+  registrarHistorico(id,'Contrato editado');
+  if(SP_CFG.url)await salvarContratoNoSP(DATA[idx]);
+  save();closeModal('modal-edit');refresh();
+}
+
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
+function renderConfig(){
+  document.getElementById('prazo-global').value=CFG.prazoGlobal||45;
+  renderUsersTable();renderAreasList();atualizarStatusConfigSP();
+}
+function salvarPrazoGlobal(){
+  const v=parseInt(document.getElementById('prazo-global').value);
+  if(!v||v<1){document.getElementById('pg-msg').style.color='#dc2626';document.getElementById('pg-msg').textContent='Valor inválido.';return;}
+  CFG.prazoGlobal=v;save();
+  document.getElementById('pg-msg').style.color='#16a34a';document.getElementById('pg-msg').textContent=`Prazo atualizado para ${v} dias.`;
+  setTimeout(()=>{document.getElementById('pg-msg').textContent='';},3000);
+}
+
+function renderUsersTable(){
+  const rows=(CFG.users||[]).map(u=>`<tr class="${u.ativo?'':'inactive'}">
+    <td><b>${u.nome}</b></td><td style="color:#888">${u.login}</td>
+    <td><span class="rp ${RC[u.role]}">${RL[u.role]}</span></td>
+    <td><span class="dot ${u.ativo?'dot-on':'dot-off'}"></span>${u.ativo?'Ativo':'Inativo'}</td>
+    <td><div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${u.id!==SESSION.id?`<button class="sbtn" style="font-size:11px;padding:5px 10px" onclick="abrirModalUser(${u.id})">Editar</button>`:'<span style="font-size:11px;color:#888">(você)</span>'}
+      ${u.id!==SESSION.id&&u.ativo?`<button class="dbtn" onclick="toggleAtivo(${u.id},false)">Desativar</button>`:''}
+      ${u.id!==SESSION.id&&!u.ativo?`<button class="sbtn" style="font-size:11px;padding:5px 10px;color:#16a34a;border-color:#bbf7d0" onclick="toggleAtivo(${u.id},true)">Reativar</button>`:''}
+    </div></td>
+  </tr>`).join('');
+  document.getElementById('users-table').innerHTML=`<thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function abrirModalUser(id){
+  const u=id?CFG.users.find(x=>x.id===id):null;
+  document.getElementById('mu-title').textContent=u?'Editar usuário':'Novo usuário';
+  document.getElementById('mu-sub').textContent=u?'Deixe a senha em branco para não alterar.':'Preencha os dados do novo membro.';
+  document.getElementById('mu-id').value=id||'';
+  document.getElementById('mu-nome').value=u?u.nome:'';
+  document.getElementById('mu-login').value=u?u.login:'';
+  document.getElementById('mu-login').disabled=!!u;
+  document.getElementById('mu-role').value=u?u.role:'editor';
+  document.getElementById('mu-pw').value='';document.getElementById('mu-pw2').value='';
+  document.getElementById('mu-msg').textContent='';
+  document.getElementById('modal-user').classList.add('open');
+}
+function salvarUser(){
+  const msg=document.getElementById('mu-msg');
+  const editId=document.getElementById('mu-id').value;
+  const nome=document.getElementById('mu-nome').value.trim();
+  const login=document.getElementById('mu-login').value.trim().toLowerCase();
+  const role=document.getElementById('mu-role').value;
+  const pw=document.getElementById('mu-pw').value;
+  const pw2=document.getElementById('mu-pw2').value;
+  if(!nome||!login){msg.style.color='#dc2626';msg.textContent='Preencha nome e login.';return;}
+  if(pw&&pw!==pw2){msg.style.color='#dc2626';msg.textContent='Senhas não coincidem.';return;}
+  if(editId){
+    const idx=CFG.users.findIndex(u=>u.id===parseInt(editId));
+    if(idx>-1){CFG.users[idx].nome=nome;CFG.users[idx].role=role;if(pw)CFG.users[idx].pw=pw;}
+  } else {
+    if(!pw){msg.style.color='#dc2626';msg.textContent='Defina uma senha.';return;}
+    if(CFG.users.find(u=>u.login===login)){msg.style.color='#dc2626';msg.textContent='Login já existe.';return;}
+    CFG.users.push({id:Date.now(),nome,login,pw,role,ativo:true});
+  }
+  save();closeModal('modal-user');renderUsersTable();
+}
+function toggleAtivo(id,ativo){const idx=CFG.users.findIndex(u=>u.id===id);if(idx>-1){CFG.users[idx].ativo=ativo;save();renderUsersTable();}}
+
+function renderAreasList(){
+  document.getElementById('areas-list').innerHTML=(CFG.areas||[]).map((a,i)=>`<span class="tag">${a}<button onclick="removeArea(${i})">×</button></span>`).join('');
+}
+function addArea(){const v=document.getElementById('nova-area').value.trim();if(!v||CFG.areas.includes(v))return;CFG.areas.push(v);save();renderAreasList();populateAreaSelects();document.getElementById('nova-area').value='';}
+function removeArea(i){if(!confirm('Remover área "'+CFG.areas[i]+'"?'))return;CFG.areas.splice(i,1);save();renderAreasList();populateAreaSelects();}
+
+function populateAreaSelects(){
+  const areas=CFG.areas||[];
+  const opts=areas.map(a=>`<option>${a}</option>`).join('');
+  document.getElementById('farea').innerHTML=`<option value="">Todas as áreas</option>`+opts;
+  document.getElementById('fa').innerHTML=`<option value="">Selecione</option>`+opts;
+  document.getElementById('me-area').innerHTML=opts;
+  const exar=document.getElementById('exar');if(exar)exar.innerHTML=`<option value="">Todas</option>`+opts;
+}
+
+function trocarSenha(){
+  const msg=document.getElementById('mypw-msg'),p1=document.getElementById('my-pw1').value,p2=document.getElementById('my-pw2').value;
+  if(!p1){msg.style.color='#dc2626';msg.textContent='Digite a nova senha.';return;}
+  if(p1!==p2){msg.style.color='#dc2626';msg.textContent='Senhas não coincidem.';return;}
+  const idx=CFG.users.findIndex(u=>u.id===SESSION.id);if(idx>-1){CFG.users[idx].pw=p1;SESSION.pw=p1;save();}
+  msg.style.color='#16a34a';msg.textContent='Senha alterada!';document.getElementById('my-pw1').value='';document.getElementById('my-pw2').value='';
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+// ══════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════════════
+function exportCSV(){
+  const fs=document.getElementById('exst').value,fa=document.getElementById('exar').value,fr=document.getElementById('exrel').value,rev=document.getElementById('exrev').value;
+  const d=DATA.filter(r=>{if(fs&&status(r)!==fs)return false;if(fa&&r.area!==fa)return false;if(fr&&r.relacao!==fr)return false;if(rev==='sim'&&!needsRev(r))return false;return true;});
+  const lp=r=>liderPrincipal(r);
+  const hdr=['Empresa','Líder Principal','Email Líder','Área','Início','Fim','Prazo off-limit (meses)','Fim Off-limit','Prazo Revisão (dias)','Tipo Envio','Tipo Off-limit','Colaboradores','Status','Última Revisão','Revisão Pendente','Observações'];
+  const rows=d.map(r=>{
+    const e=olEnd(r);
+    return[r.empresa,lp(r).nome,lp(r).email,r.area,fd(r.inicio),fd(r.fim),r.prazo,e?e.toLocaleDateString('pt-BR'):'—',prazoRev(r),r.envioTipo,r.relacao==='geral'?'Off-limit geral':'Lista específica',r.lista.replace(/\n/g,' | '),{ativo:'Ativo',vencendo:'Vencendo',expirado:'Expirado'}[status(r)],r.revisao?fd(r.revisao):'—',needsRev(r)?'Sim':'Não',r.obs];
+  });
+  const csv=[hdr,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl('\ufeff'+csv,'offlimits_export.csv','text/csv;charset=utf-8');
+  document.getElementById('exmsg').textContent=`${d.length} registro(s) exportado(s).`;setTimeout(()=>{document.getElementById('exmsg').textContent='';},4000);
+}
+function exportJSON(){dl(JSON.stringify({data:DATA,cfg:CFG},null,2),'offlimits_backup.json','application/json');document.getElementById('exmsg').textContent='Backup exportado.';setTimeout(()=>{document.getElementById('exmsg').textContent='';},3000);}
+function importarJSON(){document.getElementById('file-import').click();}
+function processarImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const p=JSON.parse(ev.target.result);if(p.data)DATA=p.data;if(p.cfg)CFG=p.cfg;save();refresh();document.getElementById('exmsg').textContent=`${DATA.length} registros importados.`;setTimeout(()=>{document.getElementById('exmsg').textContent='';},4000);}catch{alert('Arquivo inválido.');}};reader.readAsText(file);}
+function dl(content,filename,type){const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const ids=['dash','lista','novo','revisao','envios','respostas','export','config'];
+  document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('active',ids[i]===id));
+  if(id==='config')renderConfig();
+  if(id==='lista')renderLista();
+  if(id==='novo'){initLideresForm();populateAreaSelects();}
+  if(id==='envios'){filtroEnvioId=null;renderEnvios();}
+  if(id==='respostas')renderRespostas();
+}
+
+load();
+</script>
+</body>
+</html>
